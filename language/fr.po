@@ -1,0 +1,50 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+# Translators:
+# Cécile Joyet, 2025
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-26 14:48+0200\n"
+"PO-Revision-Date: 2025-09-26 12:49+0000\n"
+"Last-Translator: Cécile Joyet, 2025\n"
+"Language-Team: French (https://app.transifex.com/biblibre-/teams/298658/fr/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
+
+#: view/value-suggest-updater/admin/index/update.phtml:7
+msgid "Update values"
+msgstr "Mettre à jour les valeurs"
+
+#: view/value-suggest-updater/admin/index/update.phtml:7
+msgid "Value Suggest Updater"
+msgstr "Value Suggest Updater"
+
+#: view/value-suggest-updater/admin/index/update.phtml:13
+msgid "Start update"
+msgstr "Commencer la mise à jour"
+
+#: src/Form/UpdateForm.php:21
+msgid "Data types to update"
+msgstr "Types de données à mettre à jour"
+
+#: src/Form/UpdateForm.php:22
+msgid ""
+"Only values of selected data types will be updated. Selecting none have the "
+"same effect as selecting all."
+msgstr ""
+"Seules les valeurs des types de valeurs sélectionnés seront mises à jour. "
+"N'en sélectionner aucun a le même effet que les sélectionner tous."
+
+#: src/Controller/Admin/IndexController.php:23
+msgid "Updating values. This may take a while."
+msgstr "Mise à jour des valeurs. Cela peut prendre un certain temps."

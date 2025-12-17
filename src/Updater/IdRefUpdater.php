@@ -44,7 +44,7 @@ class IdRefUpdater implements UpdaterInterface
             return false;
         }
 
-        $json = $response->getContent();
+        $json = $response->getBody();
         $data = json_decode($json, true);
         if (!$data) {
             $logger->warn(sprintf('IdRefUpdater: failed to parse response as JSON: %s', json_last_error_msg()));

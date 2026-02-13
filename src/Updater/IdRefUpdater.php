@@ -11,6 +11,7 @@ class IdRefUpdater implements UpdaterInterface
 {
     protected HttpClient $httpClient;
     protected Logger $logger;
+    protected int $maxTries = 3;
 
     public function __construct(HttpClient $httpClient, Logger $logger)
     {
@@ -36,11 +37,11 @@ class IdRefUpdater implements UpdaterInterface
 
         $ppn = $matches[1];
         $solrUri = sprintf('https://www.idref.fr/Sru/Solr?wt=json&fl=affcourt_z&q=ppn_z:%s', urlencode($ppn));
-        $request = new Request;
-        $request->setUri($solrUri);
-        $response = $this->httpClient->send($request);
-        if (!$response->isSuccess()) {
-            $logger->warn(sprintf('IdRefUpdater: request to IdRef failed (uri: %s, status code: %d)', $solrUri, $response->getStatusCode()));
+
+        try {
+            $response = $this->request($solrUri);
+        } catch (\Exception $e) {
+            $logger->warn(sprintf('IdRefUpdater: request to IdRef failed (uri: %s): %s', $solrUri, $e->getMessage()));
             return false;
         }
 
@@ -81,5 +82,30 @@ class IdRefUpdater implements UpdaterInterface
         $value->setValue($label);
 
         return true;
+    }
+
+    protected function request(string $uri): \Laminas\Http\Response
+    {
+        $request = new Request();
+        $request->setUri($uri);
+
+        $tries = 0;
+        do {
+            $tries++;
+
+            if ($tries > 1) {
+                $sleepSeconds = ($tries - 1) * 30;
+                $this->logger->info(sprintf('HTTP request failed (URL: %s): %s. Retrying in %d seconds', $uri, $response->renderStatusLine(), $sleepSeconds));
+                sleep($sleepSeconds);
+            }
+
+            $response = $this->httpClient->send($request);
+        } while (!$response->isOk() && $tries < $this->maxTries);
+
+        if (!$response->isOk()) {
+            throw new \Exception(sprintf('HTTP request failed (URL: %s): %s', $uri, $response->renderStatusLine()));
+        }
+
+        return $response;
     }
 }

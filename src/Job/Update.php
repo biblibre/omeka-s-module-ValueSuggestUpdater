@@ -13,6 +13,7 @@ class Update extends AbstractJob
         $serviceLocator = $this->getServiceLocator();
         $logger = $serviceLocator->get('Omeka\Logger');
         $em = $serviceLocator->get('Omeka\EntityManager');
+        $api = $serviceLocator->get('Omeka\ApiManager');
         $updaterManager = $serviceLocator->get('ValueSuggestUpdater\UpdaterManager');
 
         $logger->info('Job started');
@@ -31,7 +32,11 @@ class Update extends AbstractJob
         $originalIdentityMap = $this->getEntityManager()->getUnitOfWork()->getIdentityMap();
 
         $updatedCounts = [];
-        $updatedResourceIds = [];
+        $updatedResourcesIdsByType = [
+            'items' => [],
+            'media' => [],
+            'item_sets' => []
+        ];
 
         foreach ($dataTypeNames as $dataTypeName) {
             $dataType = $updatableDataTypes[$dataTypeName];
@@ -55,8 +60,13 @@ class Update extends AbstractJob
                     if ($updater->update($value)) {
                         $updatedCounts[$dataTypeName]++;
 
-                        $resourceId = $value->getResource()->getId();
-                        $updatedResourceIds[$resourceId] = $resourceId;
+                        $resource = $value->getResource();
+                        $resourceId = $resource->getId();
+                        $resourceType = $resource->getResourceName();
+
+                        if (!in_array($resourceId, $updatedResourcesIdsByType[$resourceType])) {
+                            $updatedResourcesIdsByType[$resourceType][] = $resourceId;
+                        }
                     }
 
                     $processedCount++;
@@ -73,7 +83,26 @@ class Update extends AbstractJob
             $em->flush();
         }
 
-        $logger->info(sprintf('Total values updated: %d (in %d resources)', array_sum($updatedCounts), count($updatedResourceIds)));
+        $resourceCounts = [
+            'items' => count($updatedResourcesIdsByType['items']),
+            'media' => count($updatedResourcesIdsByType['media']),
+            'item_sets' => count($updatedResourcesIdsByType['item_sets'])
+        ];
+
+        $logger->info(sprintf('Total values updated: %d (item sets: %d, items: %d and media: %d)', array_sum($updatedCounts), $resourceCounts['item_sets'], $resourceCounts['items'], $resourceCounts['media']));
+
+        // Calls to api to trigger indexation with value updated
+        foreach (['item_sets', 'items', 'media'] as $resourceType) {
+            if (!empty($updatedResourcesIdsByType[$resourceType])) {
+                $logger->info(sprintf('Triggering API update for %d %s', count($updatedResourcesIdsByType[$resourceType]), $resourceType));
+                try {
+                    $api->batchUpdate($resourceType, $updatedResourcesIdsByType[$resourceType], [], ['continueOnError' => true]);
+                    $logger->info(sprintf('Successfully triggered API update for %s', $resourceType));
+                } catch (\Exception $e) {
+                    $logger->err(sprintf('Error during API batch update for %s: %s', $resourceType, $e->getMessage()));
+                }
+            }
+        }
 
         $logger->info('Job ended normally');
     }
